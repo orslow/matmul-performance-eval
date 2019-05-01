@@ -24,7 +24,7 @@ object MatrixMultiply extends App {
   val input1 = args(1).toString 
   val input2 = args(2).toString
   val outDir = args(3).toString
-	//val numMidSplits
+  //val numMidSplits
 
   val sqlContext = new SQLContext(sc)
 
@@ -69,7 +69,7 @@ object MatrixMultiply extends App {
 
   println("[*] Total execution time  : " + latency + " sec")
 
-	// append execution time to file
+  // append execution time to file
   //new PrintWriter(outDir) { write("[*] Total execution time  : " + latency + " sec"); close }
   val writer = new PrintWriter(new FileOutputStream(new File(outDir),true))
   writer.write("[*] Total execution time  : " + latency + " sec\n")
