@@ -6,7 +6,7 @@
 
 run.sh: 코드 jar파일로 build하고 실행.
 
-#### HDFS
+### HDFS
 
 코드 내에서 matrix size 직접 설정해야 함. -> 이렇게 진행해도 문제 없는지 궁금(현재 MR작업에 들어가는 matrix size는 100 * 500000 * 100
 
@@ -21,7 +21,7 @@ M과 N 각각 N의 열, M의 행 갯수만큼 수를 만들기 때문에 matrix 
 
 ex) ./run.sh /big/input /big/output
 
-#### Mongo
+### Mongo
 
 sharding 해놓은 collection에 query를 넣어 temp 만들기, sharding 해놓지 않은 collection에 query를 넣어 temp 만들기
 
@@ -35,3 +35,17 @@ $out으로 만들어지는 collection은 sharding이 되지 않아 sharding을 �
 ex) ./run.sh 10.0.139.199 shard input result shard_result
 
 MR작업 여러번 수행 할 때 collection 이름이 겹치지 않도록 전에 만들어놓은 temp collection 삭제 해야 함. 
+
+
+## Spark
+
+### HDFS
+
+#### CoordinateMatrix -> BlockMatrix
+
+./run.sh <num_executors> <num_partitions> <right_matrix_hdfs_directory> <left_matrix_hdfs_directory>
+
+ex) ./run.sh 60 90 /spark/data/M /spark/data/N
+
+
+### Mongo
