@@ -39,8 +39,8 @@ object MatrixMultiply extends App {
   val rows2: RDD[Row] = dataset2.rdd
 
   // to MatrixEntry
-  val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(userId:Int, movieId:Int, rating:Int) => MatrixEntry(userId, movieId, rating) }
-  val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(userId:Int, movieId:Int, rating:Int) => MatrixEntry(userId, movieId, rating) }
+  val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Int) => MatrixEntry(m, k, v) }
+  val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Int) => MatrixEntry(k, n, v) }
 
   // MatrixEntry to CoordinateMatrix
   val coordMatrix1 = new CoordinateMatrix(matrixEntries1)
@@ -53,8 +53,11 @@ object MatrixMultiply extends App {
   // result
   val resBlockMatrix = matA.multiply(matB)
   //val resBlockMatrix = matA.multiply(matB, numMidDimSplits)
+  
+  // another method to save on HDFS
+  //resBlockMatrix.toCoordinateMatrix.entries.saveAsTextFile("hdfs:///results/"+outDir)
 
-  // parse to save on hdfs
+  // parse to save on HDFS
   val locMatrix = resBlockMatrix.toLocalMatrix
 
   val lm: List[Array[Double]] = locMatrix.transpose.toArray.grouped(locMatrix.numCols).toList
