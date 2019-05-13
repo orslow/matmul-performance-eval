@@ -31,7 +31,7 @@ object MatrixMultiply extends App {
     new CoordinateMatrix(productEntries)
   }
 
-  val conf = new SparkConf().setAppName("MovieLensNMFBlockMatrix")
+  val conf = new SparkConf().setAppName("OuterProductMatrixMultiply")
   val sc = new SparkContext(conf)
 
   //val rank = 9
