@@ -48,4 +48,16 @@ MR작업 여러번 수행 할 때 collection 이름이 겹치지 않도록 전�
 ex) ./run.sh 60 90 /spark/data/M /spark/data/N
 
 
+#### Outer product (CoordinateMatrix)
+
+[참고](https://medium.com/balabit-unsupervised/scalable-sparse-matrix-multiplication-in-apache-spark-c79e9ffc0703)
+
+
+./run.sh <num_executors> <num_partitions> <right_matrix_hdfs_directory> <left_matrix_hdfs_directory>
+
+ex) ./run.sh 60 90 /spark/data/M /spark/data/N
+
+
 ### Mongo
+
+- 
