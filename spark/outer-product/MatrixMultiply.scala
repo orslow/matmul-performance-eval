@@ -18,72 +18,72 @@ import java.io.FileOutputStream
 
 object MatrixMultiply extends App {
 
-  def coordinateMatrixMultiply(leftMatrix: CoordinateMatrix, rightMatrix: CoordinateMatrix): CoordinateMatrix = {
-    val M_ = leftMatrix.entries
-      .map({ case MatrixEntry(i, j, v) => (j, (i, v)) })
-    val N_ = rightMatrix.entries
-      .map({ case MatrixEntry(j, k, w) => (j, (k, w)) })
-    val productEntries = M_
-      .join(N_)
-      .map({ case (_, ((i, v), (k, w))) => ((i, k), (v * w)) })
-      .reduceByKey(_ + _)
-      .map({ case ((i, k), sum) => MatrixEntry(i, k, sum) })
-    new CoordinateMatrix(productEntries)
-  }
+	def coordinateMatrixMultiply(leftMatrix: CoordinateMatrix, rightMatrix: CoordinateMatrix): CoordinateMatrix = {
+		val M_ = leftMatrix.entries
+			.map({ case MatrixEntry(i, j, v) => (j, (i, v)) })
+		val N_ = rightMatrix.entries
+			.map({ case MatrixEntry(j, k, w) => (j, (k, w)) })
+		val productEntries = M_
+			.join(N_)
+			.map({ case (_, ((i, v), (k, w))) => ((i, k), (v * w)) })
+			.reduceByKey(_ + _)
+			.map({ case ((i, k), sum) => MatrixEntry(i, k, sum) })
+		new CoordinateMatrix(productEntries)
+	}
 
-  val conf = new SparkConf().setAppName("OuterProductMatrixMultiply")
-  val sc = new SparkContext(conf)
+	val conf = new SparkConf().setAppName("OuterProductMatrixMultiply")
+	val sc = new SparkContext(conf)
 
-  //val rank = 9
-  //val iteration = 2
-  val p = args(0).toInt
-  val input1 = args(1).toString
-  val input2 = args(2).toString
-  val outDir = args(3).toString
+	val p = args(0).toInt
+	val input1 = args(1).toString
+	val input2 = args(2).toString
+	val m = args(3).toInt
+	val k = args(4).toInt
+	val n = args(5).toInt
 
-  val sqlContext = new SQLContext(sc)
 
-  var tik = System.nanoTime()
+	val sqlContext = new SQLContext(sc)
 
-  // load each matrix
-  val dataset1 = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input1)
-  val dataset2 = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input2)
+	var tik0 = System.nanoTime()
 
-  // to RDD
-  val rows1: RDD[Row] = dataset1.rdd
-  val rows2: RDD[Row] = dataset2.rdd
+	// load each matrix
+	val dataset1 = sqlContext.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "true").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input1)
+	val dataset2 = sqlContext.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "true").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input2)
 
-  // parse
-  val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Int) => MatrixEntry(m, k, v) }
-  val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Int) => MatrixEntry(k, n, v) }
+	// to RDD
+	val rows1: RDD[Row] = dataset1.rdd
+	val rows2: RDD[Row] = dataset2.rdd
 
-  // MatrixEntry to CoordinateMatrix
-  val coordMatrix1 = new CoordinateMatrix(matrixEntries1)
-  val coordMatrix2 = new CoordinateMatrix(matrixEntries2)
+	// parse
+	val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Double) => MatrixEntry(m, k, v) }
+	val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Int) => MatrixEntry(k, n, v.toDouble) }
 
-  val resultMatrix = coordinateMatrixMultiply(coordMatrix1, coordMatrix2)
+	// MatrixEntry to CoordinateMatrix
+	val coordMatrix1 = new CoordinateMatrix(matrixEntries1, m, k)
+	val coordMatrix2 = new CoordinateMatrix(matrixEntries2, k, n)
 
-  resultMatrix.entries.saveAsTextFile("hdfs:///results/"+outDir)
+	coordMatrix1.entries.cache
+	coordMatrix2.entries.cache
 
-  /*
-  // parse for save on hdfs
-  val locMatrix = resBlockMatrix.toLocalMatrix
+	// validation
+	coordMatrix1.entries.take(1)
+	coordMatrix2.entries.take(1)
 
-  val lm: List[Array[Double]] = locMatrix.transpose.toArray.grouped(locMatrix.numCols).toList
 
-  val lines: List[String] = lm.map(line => line.mkString(" "))
+	// cache해놓고 count같은거 해서 action을 한번 만들
 
-  //sc.parallelize(lines).repartition(1).saveAsTextFile("hdfs:///big/output")
+	val resultMatrix = coordinateMatrixMultiply(coordMatrix1, coordMatrix2)
 
-  sc.parallelize(lines).saveAsTextFile("hdfs:///results/"+outDir)
+	var tik1 = System.nanoTime()
+	resultMatrix.entries.saveAsTextFile("/outerProductResult")
+	//resultMatrix.entries.take(1)
+	var tik2 = System.nanoTime()
 
-  val latency = (System.nanoTime() - tik) / 1e9
+	val latency1 = ((tik1-tik0) / 1e9)
+	val latency2 = ((tik2-tik1) / 1e9)
 
-  println("[*] Total execution time  : " + latency + " sec")
-
-  //new PrintWriter(outDir) { write("[*] Total execution time  : " + latency + " sec"); close }
-  val writer = new PrintWriter(new FileOutputStream(new File(outDir),true))
-  writer.write("[*] Total execution time  : " + latency + " sec\n")
-  writer.close
-  */
+	val writer = new PrintWriter(new FileOutputStream(new File("results"),true))
+	writer.write("\n" + "Matrix size: " + m + "-" + k + "-" + n + "\n")
+	writer.write("[*] Execution time  : " + latency1 + " / " + latency2 + "\n")
+	writer.close
 }

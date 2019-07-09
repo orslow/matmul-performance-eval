@@ -14,67 +14,71 @@ import java.io.PrintWriter
 import java.io.File
 import java.io.FileOutputStream
 
-
 object MatrixMultiply extends App {
 
-  val conf = new SparkConf().setAppName("MovieLensNMFBlockMatrix")
-  val sc = new SparkContext(conf)
+	val conf = new SparkConf().setAppName("BlockMatrixMultiply")
+	val sc = new SparkContext(conf)
 
-  val p = args(0).toInt // partitions on load input file
-  val input1 = args(1).toString 
-  val input2 = args(2).toString
-  val outDir = args(3).toString
-  //val numMidSplits
+	//val rank = 9
+	//val iteration = 2
+	val p = args(0).toInt
+	val input1 = args(1).toString
+	val input2 = args(2).toString
+	val m = args(3).toInt
+	val k = args(4).toInt
+	val n = args(5).toInt
 
-  val sqlContext = new SQLContext(sc)
+	// rows/cols per block
+	val mPerBlock = args(6).toInt
+	val kPerBlock = args(7).toInt
+	val nPerBlock = args(8).toInt
 
-  var tik = System.nanoTime()
+	val sqlContext = new SQLContext(sc)
 
-  // load each matrix
-  val dataset1 = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input1)
-  val dataset2 = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input2)
+	var tik0 = System.nanoTime()
 
-  // to RDD
-  val rows1: RDD[Row] = dataset1.rdd
-  val rows2: RDD[Row] = dataset2.rdd
+	// load each matrix
+	val dataset1 = sqlContext.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "false").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input1)
+	val dataset2 = sqlContext.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "false").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input2)
 
-  // to MatrixEntry
-  val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Int) => MatrixEntry(m, k, v) }
-  val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Int) => MatrixEntry(k, n, v) }
+	// to RDD
+	val rows1: RDD[Row] = dataset1.rdd
+	val rows2: RDD[Row] = dataset2.rdd
 
-  // MatrixEntry to CoordinateMatrix
-  val coordMatrix1 = new CoordinateMatrix(matrixEntries1)
-  val coordMatrix2 = new CoordinateMatrix(matrixEntries2)
+	// parse
+	val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Double) => MatrixEntry(m, k, v) }
+	val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Int) => MatrixEntry(k, n, v.toDouble) }
 
-  // Coordinate Matrix to BlockMatrix (to compute)
-  val matA: BlockMatrix = coordMatrix1.toBlockMatrix()
-  val matB: BlockMatrix = coordMatrix2.toBlockMatrix()
+	// MatrixEntry to CoordinateMatrix
+	val coordMatrix1 = new CoordinateMatrix(matrixEntries1, m, k)
+	val coordMatrix2 = new CoordinateMatrix(matrixEntries2, k, n)
 
-  // result
-  val resBlockMatrix = matA.multiply(matB)
-  //val resBlockMatrix = matA.multiply(matB, numMidDimSplits)
-  
-  // another method to save on HDFS
-  //resBlockMatrix.toCoordinateMatrix.entries.saveAsTextFile("hdfs:///results/"+outDir)
+	// Coordinate Matrix to BlockMatrix (to compute)
+	val matA: BlockMatrix = coordMatrix1.toBlockMatrix(mPerBlock, kPerBlock)
+	val matB: BlockMatrix = coordMatrix2.toBlockMatrix(kPerBlock, nPerBlock)
 
-  // parse to save on HDFS
-  val locMatrix = resBlockMatrix.toLocalMatrix
+	matA.cache
+	matB.cache
 
-  val lm: List[Array[Double]] = locMatrix.transpose.toArray.grouped(locMatrix.numCols).toList
+	matA.blocks.take(1)
+	matB.blocks.take(1)
 
-  val lines: List[String] = lm.map(line => line.mkString(" "))
+	//matA.validate
+	//matB.validate
 
-  //sc.parallelize(lines).repartition(1).saveAsTextFile("hdfs:///big/output")
+	val resBlockMatrix = matA.multiply(matB)
 
-  sc.parallelize(lines).saveAsTextFile("hdfs:///results/"+outDir)
+	val tik1 = System.nanoTime()
+	resBlockMatrix.toCoordinateMatrix.entries.saveAsTextFile("/blockMatrixResult")
+	//resBlockMatrix.blocks.take(1)
+	//resBlockMatrix.validate
+	val tik2 = System.nanoTime()
 
-  val latency = (System.nanoTime() - tik) / 1e9
+	val latency1 = ((tik1-tik0) / 1e9)
+	val latency2 = ((tik2-tik1) / 1e9)
 
-  println("[*] Total execution time  : " + latency + " sec")
-
-  // append execution time to file
-  //new PrintWriter(outDir) { write("[*] Total execution time  : " + latency + " sec"); close }
-  val writer = new PrintWriter(new FileOutputStream(new File(outDir),true))
-  writer.write("[*] Total execution time  : " + latency + " sec\n")
-  writer.close
+	val writer = new PrintWriter(new FileOutputStream(new File("results"),true))
+	writer.write("\n" + "Matrix size: " + m + "-" + k + "-" + n + " / " + "rows/colsPerBlock: " + mPerBlock + "-" + kPerBlock + "-" + nPerBlock+ "\n")
+	writer.write("[*] Execution time  : " + latency1 + " / " + latency2 + "\n")
+	writer.close
 }

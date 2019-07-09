@@ -10,15 +10,16 @@ spark-submit --master yarn --num-executors $1 --class MatrixMultiply inner-matri
 fin=`date +%s`
 printf "$(date) $line\n"
 runtime=$((fin-begin))
-	printf "Execution time: $runtime\n\n"
+printf "Execution time: $runtime\n\n"
 #echo "Execution time #$i: $runtime" >> result
+
+#hdfs dfs -rm -r /innerProductResult
 
 #hdfs dfs -rm -r /results/executors_$1_partitions_$2_result
 
 # stop-all and start-all for clean up memory?
 # sudo sh -c "sync; echo 3 > /proc/sys/vm/drop_caches"?
 
-#./run.sh 60 60 /bfs-spark/100thousand/M /bfs-spark/100thousand/N 100000 100000 100
-#./run.sh 60 60 /bfs-spark/100thousand/M /bfs-spark/100thousand/N 100000 100000 100
-
-#./run.sh 60 60 /bfs-spark/million/M /bfs-spark/million/N 1000000 1000000 100
+# ./run.sh 60 60 /bfs-spark/100K/M /bfs-spark/100K/N 100000 100000 100
+# ./run.sh 60 60 /bfs-spark/200K/M /bfs-spark/200K/N 200000 200000 100
+# ./run.sh 60 60 /bfs-spark/million/M /bfs-spark/million/N 1000000 1000000 100
