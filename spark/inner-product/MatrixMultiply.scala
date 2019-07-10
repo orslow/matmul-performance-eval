@@ -42,7 +42,7 @@ object MatrixMultiply extends App {
 
 	// parse
 	val matrixEntries1 = rows1.map { case Row(m:Int, k:Int, v:Double) => (m, (k, v)) }
-	val matrixEntries2 = rows2.map { case Row(k:Int, n:Int, v:Int) => (n, (k, v.Double)) } // transpose
+	val matrixEntries2 = rows2.map { case Row(k:Int, n:Int, v:Int) => (n, (k, v.toDouble)) } // transpose
 
 	val irm1 = matrixEntries1.groupByKey
 	val irm2 = matrixEntries2.groupByKey
