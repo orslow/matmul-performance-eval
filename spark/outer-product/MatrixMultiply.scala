@@ -14,8 +14,6 @@ import java.io.PrintWriter
 import java.io.File
 import java.io.FileOutputStream
 
-
-
 object MatrixMultiply extends App {
 
 	def coordinateMatrixMultiply(leftMatrix: CoordinateMatrix, rightMatrix: CoordinateMatrix): CoordinateMatrix = {
@@ -41,7 +39,6 @@ object MatrixMultiply extends App {
 	val k = args(4).toInt
 	val n = args(5).toInt
 
-
 	val sqlContext = new SQLContext(sc)
 
 	var tik0 = System.nanoTime()
@@ -56,34 +53,36 @@ object MatrixMultiply extends App {
 
 	// parse
 	val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Double) => MatrixEntry(m, k, v) }
-	val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Int) => MatrixEntry(k, n, v.toDouble) }
+	val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Double) => MatrixEntry(k, n, v) }
+
+	matrixEntries1.cache
+	matrixEntries2.cache
 
 	// MatrixEntry to CoordinateMatrix
-	val coordMatrix1 = new CoordinateMatrix(matrixEntries1, m, k)
-	val coordMatrix2 = new CoordinateMatrix(matrixEntries2, k, n)
+	val coordMatrix1 = new CoordinateMatrix(matrixEntries1)
+	val coordMatrix2 = new CoordinateMatrix(matrixEntries2)
 
 	coordMatrix1.entries.cache
 	coordMatrix2.entries.cache
 
-	// validation
 	coordMatrix1.entries.take(1)
 	coordMatrix2.entries.take(1)
-
 
 	// cache해놓고 count같은거 해서 action을 한번 만들
 
 	val resultMatrix = coordinateMatrixMultiply(coordMatrix1, coordMatrix2)
 
 	var tik1 = System.nanoTime()
-	resultMatrix.entries.saveAsTextFile("/outerProductResult")
+	resultMatrix.entries.map(a => a.i+" "+a.j+" "+a.value).saveAsTextFile("/outerProductResult")
 	//resultMatrix.entries.take(1)
 	var tik2 = System.nanoTime()
 
 	val latency1 = ((tik1-tik0) / 1e9)
 	val latency2 = ((tik2-tik1) / 1e9)
 
-	val writer = new PrintWriter(new FileOutputStream(new File("results"),true))
+	val writer = new PrintWriter(new FileOutputStream(new File("results"), true))
 	writer.write("\n" + "Matrix size: " + m + "-" + k + "-" + n + "\n")
 	writer.write("[*] Execution time  : " + latency1 + " / " + latency2 + "\n")
 	writer.close
 }
+
