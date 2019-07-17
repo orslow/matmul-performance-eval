@@ -55,9 +55,6 @@ object MatrixMultiply extends App {
 	val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Double) => MatrixEntry(m, k, v) }
 	val matrixEntries2: RDD[MatrixEntry] = rows2.map { case Row(k:Int, n:Int, v:Double) => MatrixEntry(k, n, v) }
 
-	matrixEntries1.cache
-	matrixEntries2.cache
-
 	// MatrixEntry to CoordinateMatrix
 	val coordMatrix1 = new CoordinateMatrix(matrixEntries1)
 	val coordMatrix2 = new CoordinateMatrix(matrixEntries2)
@@ -68,12 +65,8 @@ object MatrixMultiply extends App {
 	coordMatrix1.entries.take(1)
 	coordMatrix2.entries.take(1)
 
-	// cache해놓고 count같은거 해서 action을 한번 만들
-
-	val resultMatrix = coordinateMatrixMultiply(coordMatrix1, coordMatrix2)
-
 	var tik1 = System.nanoTime()
-	resultMatrix.entries.map(a => a.i+" "+a.j+" "+a.value).saveAsTextFile("/outerProductResult")
+	coordinateMatrixMultiply(coordMatrix1, coordMatrix2).entries.map(a => a.i+" "+a.j+" "+a.value).saveAsTextFile("/outerProductResult")
 	//resultMatrix.entries.take(1)
 	var tik2 = System.nanoTime()
 

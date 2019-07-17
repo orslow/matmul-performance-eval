@@ -6,14 +6,16 @@
 
 printf "$(date) $line\n"
 begin=`date +%s`
-spark-submit --master yarn --num-executors $1 --class MatrixMultiply outer-matrix-multiply.jar $2 $3 $4 $5 $6 $7
+#spark-submit --master spark://kef-master:7077 --num-executors $1 --class MatrixMultiply outer-matrix-multiply.jar $2 $3 $4 $5 $6 $7
+#spark-submit --master yarn --num-executors $1 --class MatrixMultiply outer-matrix-multiply.jar $2 $3 $4 $5 $6 $7
+spark-submit --master yarn --driver-memory 4g --num-executors $1 --class MatrixMultiply ir-matrix-multiply.jar $2 $3 $4 $5 $6 $7
 fin=`date +%s`
 printf "$(date) $line\n"
 runtime=$((fin-begin))
-printf "Execution time: $runtime\n\n"
+	printf "Execution time: $runtime\n\n"
 #echo "Execution time #$i: $runtime" >> result
 
-#hdfs dfs -rm -r /outerProductResult
+#hdfs dfs -rm -r /irMultiplyResult
 
 #hdfs dfs -rm -r /results/executors_$1_partitions_$2_result
 

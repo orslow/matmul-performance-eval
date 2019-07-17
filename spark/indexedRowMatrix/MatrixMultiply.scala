@@ -16,22 +16,15 @@ import java.io.FileOutputStream
 
 object MatrixMultiply extends App {
 
-  val conf = new SparkConf().setAppName("BlockMatrixMultiply")
+  val conf = new SparkConf().setAppName("IndexedRowMatrixMultiply")
   val sc = new SparkContext(conf)
 
-  // ./run.sh 12 60 /ldbc/s/7-5/M /ldbc/s/7-5/N 633432 633432 100 1000 1000 100 500
   val p = args(0).toInt
   val input1 = args(1).toString
   val input2 = args(2).toString
   val m = args(3).toInt
   val k = args(4).toInt
   val n = args(5).toInt
-
-  // split then split
-  val mPerBlock = args(6).toInt
-  val kPerBlock = args(7).toInt
-  val nPerBlock = args(8).toInt
-  val midSplits = args(9).toInt
 
   val sqlContext = new SQLContext(sc)
 
@@ -53,16 +46,16 @@ object MatrixMultiply extends App {
   val coordMatrix1 = new CoordinateMatrix(matrixEntries1, m, k)
   val coordMatrix2 = new CoordinateMatrix(matrixEntries2, k, n)
 
-  val blockMatrix1 = coordMatrix1.toBlockMatrix(mPerBlock, kPerBlock)
-  val blockMatrix2 = coordMatrix2.toBlockMatrix(kPerBlock, nPerBlock)
+  val irMatrix = coordMatrix1.toIndexedRowMatrix // M 
+  val locMatrix = coordMatrix2.toBlockMatrix.toLocalMatrix // N
 
-  blockMatrix1.cache
-  blockMatrix2.cache
+  // cache해놓고 count같은거 해서 action을 한번 만들
+  irMatrix.rows.cache
+  irMatrix.rows.take(1)
 
   var tik1 = System.nanoTime()
-  blockMatrix1.multiply(blockMatrix2, midSplits).toCoordinateMatrix.entries.filter(a => a.value != 0.0).map(a => a.i+" "+a.j+" "+a.value).saveAsTextFile("/blockMultiplyResult")
+  irMatrix.multiply(locMatrix).toCoordinateMatrix.entries.filter(a => a.value != 0.0).map(a => a.i+" "+a.j+" "+a.value).saveAsTextFile("/irMultiplyResult")
   var tik2 = System.nanoTime()
-
 
   val latency1 = ((tik1-tik0) / 1e9)
   val latency2 = ((tik2-tik1) / 1e9)
@@ -72,3 +65,4 @@ object MatrixMultiply extends App {
   writer.write("[*] Execution time  : " + latency1 + " / " + latency2 + "\n")
   writer.close
 }
+

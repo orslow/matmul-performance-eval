@@ -67,3 +67,4 @@ object MatrixMultiply extends App {
   writer.write("[*] Execution time  : " + latency1 + " / " + latency2 + "\n")
   writer.close
 }
+
