@@ -18,9 +18,9 @@ import java.io.FileOutputStream
 object MatrixMultiply extends App {
 
 	def denseMaker(A: List[(Int, Int, Double)], k: Int): DenseMatrix = {
-	  val values = new Array[Double](k)
-	  A.foreach( a => values(a._1) = a._3 )
-	  new DenseMatrix(k, 1, values)
+		val values = new Array[Double](k)
+		A.foreach( a => values(a._1) = a._3 )
+		new DenseMatrix(k, 1, values)
 	}
 
 	val spark = SparkSession
@@ -39,15 +39,15 @@ object MatrixMultiply extends App {
 
 	var tik0 = System.nanoTime()
 
-  // load each matrix
-  val dataset1 = spark.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "false").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input1)
-  val dataset2 = spark.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "false").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input2)
+	// load each matrix
+	val dataset1 = spark.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "false").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input1)
+	val dataset2 = spark.read.format("com.databricks.spark.csv").option("delimiter", " ").option("header", "false").option("numPartitions", p).option("inferSchema", true).load("hdfs://"+input2)
 
-  // to RDD
-  val rows1: RDD[Row] = dataset1.rdd
+	// to RDD
+	val rows1: RDD[Row] = dataset1.rdd
 
-  // parse
-  val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Double) => MatrixEntry(m, k, v) }
+	// parse
+	val matrixEntries1: RDD[MatrixEntry] = rows1.map { case Row(m:Int, k:Int, v:Double) => MatrixEntry(m, k, v) }
 
 	val coordMatrix1 = new CoordinateMatrix(matrixEntries1, m, k)
 	val irMatrix = coordMatrix1.toIndexedRowMatrix
