@@ -56,6 +56,13 @@ object MatrixMultiply extends App {
   irMatrix.rows.take(1)
 
   val r1 = rows2.map( { case Row(k:Int, n:Int, v:Double) => (k, n, v) } )
+  val r2 = r1.groupBy(a => a._2)
+  r2.cache
+
+  for(i <- 0 to h-1) {
+    jari(i) = r2.filter(a => a._1 % h == i ).map( a => a._1 ).collect
+    sk(i) = r2.filter(a => a._1 % h == i ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
+  }
 
   val so1 = r1.groupBy(a => a._2).collect
 
@@ -68,7 +75,7 @@ object MatrixMultiply extends App {
   val sk2 = sk.zipWithIndex
 
   var tik1 = System.nanoTime()
-  sk2.map( a => irMatrix.multiply(new CoordinateMatrix(sc.parallelize(a._1.toSeq), k, jari(a._2).size).toBlockMatrix.toLocalMatrix ).toCoordinateMatrix.entries.filter( b => b.value != 0.0).map(c => c.i+ " " + jari(a._2)(c.j.toInt) + " " + c.value ) ).map( d => d.saveAsTextFile("/LumpResult/"+d.id) )
+  sk2.map( a => irMatrix.multiply(new CoordinateMatrix(sc.parallelize(a._1.toSeq), k, jari(a._2).size).toBlockMatrix.toLocalMatrix ).toCoordinateMatrix.entries.filter( b => b.value != 0.0).map(c => c.i+ " " + jari(a._2)(c.j.toInt) + " " + c.value ) ).map( d => d.saveAsTextFile("/lumpResult/"+d.id) )
   var tik2 = System.nanoTime()
 
   val latency1 = ((tik1-tik0) / 1e9)
