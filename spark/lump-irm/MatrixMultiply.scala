@@ -32,8 +32,7 @@ object MatrixMultiply extends App {
   val m = args(3).toInt
   val k = args(4).toInt
   val n = args(5).toInt
-
-  val h = 5 // split size(to argument?)
+  val h = args(6).toInt
 
   var tik0 = System.nanoTime()
 
@@ -56,23 +55,23 @@ object MatrixMultiply extends App {
   irMatrix.rows.take(1)
 
   val r1 = rows2.map( { case Row(k:Int, n:Int, v:Double) => (k, n, v) } )
-  val r2 = r1.groupBy(a => a._2)
-  r2.cache
-
-  for(i <- 0 to h-1) {
-    jari(i) = r2.filter(a => a._1 % h == i ).map( a => a._1 ).collect
-    sk(i) = r2.filter(a => a._1 % h == i ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
-  }
-
-  val so1 = r1.groupBy(a => a._2).collect
-
+  
   val jari = Array.fill[Array[Int]](h)(Array.empty[Int])
   val sk = Array.fill[Array[MatrixEntry]](h)(Array.empty[MatrixEntry])
 
-  // save block positions on "jari" and values on "sk"
-  so1.map( a => ( jari( a._1 % h ) = jari( a._1 % h ) :+ a._1, a._2.foreach( b => sk( a._1 % h ) = sk( a._1 % h ):+ MatrixEntry(b._1, jari( a._1 % h ).size-1, b._3 ) ) ) )
+  val r2 = r1.groupBy(a => a._2)
+
+  r2.cache
+
+  for(i <- 0 to h-1) {
+    //jari(i) = r2.filter(a => java.lang.Math.floorMod(a._1, h) == i ).map( a => a._1 ).collect
+    //sk(i) = r2.filter(a => java.lang.Math.floorMod(a._1, h) == i ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
+    jari(i) = r2.filter(a => ((a._1 % 5) == i) ).map( a => a._1 ).collect
+    sk(i) = r2.filter(a => ((a._1 % 5) == i) ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
+  }
 
   val sk2 = sk.zipWithIndex
+  sk2.take(1)
 
   var tik1 = System.nanoTime()
   sk2.map( a => irMatrix.multiply(new CoordinateMatrix(sc.parallelize(a._1.toSeq), k, jari(a._2).size).toBlockMatrix.toLocalMatrix ).toCoordinateMatrix.entries.filter( b => b.value != 0.0).map(c => c.i+ " " + jari(a._2)(c.j.toInt) + " " + c.value ) ).map( d => d.saveAsTextFile("/lumpResult/"+d.id) )
