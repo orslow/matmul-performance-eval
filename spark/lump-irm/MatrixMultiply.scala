@@ -66,8 +66,8 @@ object MatrixMultiply extends App {
   for(i <- 0 to h-1) {
     //jari(i) = r2.filter(a => java.lang.Math.floorMod(a._1, h) == i ).map( a => a._1 ).collect
     //sk(i) = r2.filter(a => java.lang.Math.floorMod(a._1, h) == i ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
-    jari(i) = r2.filter(a => ((a._1 % 5) == i) ).map( a => a._1 ).collect
-    sk(i) = r2.filter(a => ((a._1 % 5) == i) ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
+    jari(i) = r2.filter(a => ((a._1 % h) == i) ).map( a => a._1 ).collect
+    sk(i) = r2.filter(a => ((a._1 % h) == i) ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
   }
 
   val sk2 = sk.zipWithIndex
