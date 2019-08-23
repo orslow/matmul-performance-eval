@@ -17,12 +17,6 @@ import java.io.FileOutputStream
 
 object MatrixMultiply extends App {
 
-  def denseMaker(A: List[(Int, Int, Double)], m: Int, k: Int): DenseMatrix = {
-    val values = new Array[Double](m*k)
-    A.foreach( a => values(a._1+a._2*m) = a._3 )
-    new DenseMatrix(m, k, values)
-  }
-
   val conf = new SparkConf().setAppName("LumpIndexedRowMultiply")
   val sc = new SparkContext(conf)
 
