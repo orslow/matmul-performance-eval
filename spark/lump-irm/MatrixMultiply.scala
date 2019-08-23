@@ -60,7 +60,7 @@ object MatrixMultiply extends App {
 
   // use % to split columns
   for(i <- 0 to h-1) {
-    val ho = h // should be defined
+    val ho = h // should be defined in for loop!
     jari(i) = grouped.filter(a => ((a._1) % (ho)) == i ).map( a => a._1 ).collect
     splits(i) = grouped.filter(a => ((a._1) % (ho)) == i ).zipWithIndex.map( a => a._1._2.map( b => MatrixEntry(b._1, a._2, b._3) ) ).flatMap( a => a ).collect
   }
