@@ -1,6 +1,6 @@
 ### Matrix multiplication performance evaluation on Spark
 
-Evaluate with 'saveAsTextFile' method(based on multiple-source BFS),
+Evaluate performance with 'saveAsTextFile' method(based on multiple-source BFS),
 
 inner-product method should be improved(any help would be appreciated)
 
