@@ -1,24 +1,24 @@
 #!/bin/bash
 
-for sz in ground-truth # matrix type ( small / mid / large / xlarge )
+sz=ground-truth
+
+mt=com-Amazon
+ms=334863
+
+
+for dm in 32 # 16 8 # driver memory
 do
-for mt in com-Amazon # specific matrix type
+for em in 20 # 10 40 # executor memory
 do
-for ms in 334863 # matrix size
+for ec in 4 # 2 1 # executor cores
 do
-for dm in 32 # driver memory
+for sp in 64 # 32 16 # split size
 do
-for em in 20 # executor memory
+for rp in 64 # 32 16 # random split size
 do
-for ec in 4 # executor cores
+for col in 100 # 1000 
 do
-for sp in 64 # split size
-do
-for rp in 64 # random split size
-do
-for col in 100
-do
-for density in 00001 00005 0001 0005 001 005 01 05 1 # 1 5
+for density in 00001 # 00005 0001 0005 001 005 01 05 1
 do
 for rep in 1 2 3 # 4 5
 do
@@ -117,8 +117,3 @@ done
 done
 done
 done
-done
-done
-done
-
-

@@ -26,7 +26,7 @@ object MatrixMultiply {
     val lmat_info = input1.split("/").takeRight(2)
     val rmat_info = input2.split("/").takeRight(2)
 
-    val conf = new SparkConf().setAppName("block_"+m+"-"+k+"-"+n+"-"+rmat_info(0)+"-"+rmat_info(1)+"/"+mPerBlock+"-"+k+"-"+nPerBlock+"&"+midSplits)
+    val conf = new SparkConf().setAppName("block_"+m+"-"+k+"-"+n+"-"+rmat_info(0)+"-"+rmat_info(1)+"/"+mPerBlock+"-"+kPerBlock+"-"+nPerBlock+"&"+midSplits)
     val sc = new SparkContext(conf)
 
     val tik0 = System.nanoTime()
@@ -39,8 +39,8 @@ object MatrixMultiply {
     val me1 = parsed_rdd1.flatMap( a => MatrixEntry(a(0).toInt, a(1).toInt, a(2).toDouble) :: MatrixEntry(a(1).toInt, a(0).toInt, a(2).toDouble) :: Nil)
     val me2 = rdd2.map( a => a.split(" ")).map( a => MatrixEntry(a(0).toInt, a(1).toInt, a(2).toDouble))
 
-    val leftMat = new CoordinateMatrix(me1, m, k).toBlockMatrix(mPerBlock, k)
-    val rightMat = new CoordinateMatrix(me2, k, n).toBlockMatrix(k, nPerBlock)
+    val leftMat = new CoordinateMatrix(me1, m, k).toBlockMatrix(mPerBlock, kPerBlock)
+    val rightMat = new CoordinateMatrix(me2, k, n).toBlockMatrix(kPerBlock, nPerBlock)
 
     //leftMat.blocks.count
     //rightMat.blocks.count
@@ -59,7 +59,7 @@ object MatrixMultiply {
     val writer = new PrintWriter(new FileOutputStream(new File(result_dir), true))
     writer.write(lmat_info(0)+"-"+lmat_info(1)+","+rmat_info(0)+"-"+rmat_info(1)+",")
     writer.write(m + "-" + k + "-" + n + ",")
-    writer.write(mPerBlock + "-" + k + "-" + nPerBlock + "/" + midSplits + ",")
+    writer.write(mPerBlock + "-" + kPerBlock + "-" + nPerBlock + "/" + midSplits + ",")
     writer.write(latency1 + "," + latency2 + "," + latency3 + "\n")
     writer.close
   }

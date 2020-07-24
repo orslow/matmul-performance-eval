@@ -15,7 +15,7 @@ val partitions = 64
 
 // block split options
 val mPerBlock = 252
-val kPerBlock = m
+val kPerBlock = 252
 val nPerBlock = 50 // manually set
 val midSplits = 64
 //val result_dir = "/zeppelin/results/block"
@@ -23,7 +23,7 @@ val lmat_info = input1.split("/").takeRight(2)
 val rmat_info = input2.split("/").takeRight(2)
 
 /*
-val conf = new SparkConf().setAppName("block_"+m+"-"+k+"-"+n+"-"+rmat_info(0)+"-"+rmat_info(1)+"/"+mPerBlock+"-"+k+"-"+nPerBlock+"&"+midSplits)
+val conf = new SparkConf().setAppName("block_"+m+"-"+k+"-"+n+"-"+rmat_info(0)+"-"+rmat_info(1)+"/"+mPerBlock+"-"+kPerBlock+"-"+nPerBlock+"&"+midSplits)
 val sc = new SparkContext(conf)
 */
 
@@ -37,8 +37,8 @@ val parsed_rdd1 = rdd1.map( a => a.split(" "))
 val me1 = parsed_rdd1.map( a => MatrixEntry(a(0).toInt, a(1).toInt, a(2).toDouble))
 val me2 = rdd2.map( a => a.split(" ")).map( a => MatrixEntry(a(0).toInt, a(1).toInt, a(2).toDouble))
 
-val leftMat = new CoordinateMatrix(me1, m, k).toBlockMatrix(mPerBlock, k)
-val rightMat = new CoordinateMatrix(me2, k, n).toBlockMatrix(k, nPerBlock)
+val leftMat = new CoordinateMatrix(me1, m, k).toBlockMatrix(mPerBlock, kPerBlock)
+val rightMat = new CoordinateMatrix(me2, k, n).toBlockMatrix(kPerBlock, nPerBlock)
 
 //leftMat.blocks.count
 //rightMat.blocks.count
@@ -58,7 +58,7 @@ val latency3 = latency1 + latency2
 val writer = new PrintWriter(new FileOutputStream(new File(result_dir), true))
 writer.write(lmat_info(0)+"-"+lmat_info(1)+","+rmat_info(0)+"-"+rmat_info(1)+",")
 writer.write(m + "-" + k + "-" + n + ",")
-writer.write(mPerBlock + "-" + k + "-" + nPerBlock + "/" + midSplits + ",")
+writer.write(mPerBlock + "-" + kPerBlock + "-" + nPerBlock + "/" + midSplits + ",")
 writer.write(latency1 + "," + latency2 + "," + latency3 + "\n")
 writer.close
 */
