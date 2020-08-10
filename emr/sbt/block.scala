@@ -19,7 +19,7 @@ object MatrixMultiply {
 
     // split then split
     val mPerBlock = args(6).toInt
-    val kPerBlock = args(7).toInt // no need but
+    val kPerBlock = args(7).toInt
     val nPerBlock = args(8).toInt
     val midSplits = args(9).toInt
     val result_dir = args(10).toString
